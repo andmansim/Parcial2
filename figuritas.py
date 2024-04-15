@@ -4,7 +4,6 @@ import meshpy.tet as tet
 from scipy.sparse import lil_matrix
 import matplotlib.pyplot as plt
 import pyvtk
-import vtk
 
 #Parte 1
 #definimos las dimansiones del dominio
@@ -312,10 +311,10 @@ def calcular_tensor_esfuerzos(deformacion, propiedades):
 
 def visualizar_solucion(tensiores, deformaciones, nodos, tetraedros):
     #creamos un objeto vtkUnstructuredGrid para almacenar la malla
-    grid =vtk.vtkUnstructuredGrid()
+    grid =pyvtk.UnstructuredGrid()
     
     #objeto vtkpoints para almacenar los nodos
-    points = vtk.vtkPoints()
+    points = pyvtk.Points()
     
     #almacenar nodos
     for nodo in nodos:
@@ -325,7 +324,7 @@ def visualizar_solucion(tensiores, deformaciones, nodos, tetraedros):
     grid.SetPoints(points)
     
     #crear un array para almacenar las tensiones
-    tensiones_array = vtk.vtkDoubleArray()
+    tensiones_array = pyvtk.DoubleArray()
     tensiones_array.SetNumberOfComponents(1)
     tensiones_array.SetName("Tensiones")
     
@@ -337,7 +336,7 @@ def visualizar_solucion(tensiores, deformaciones, nodos, tetraedros):
     grid.GetPointData().AddArray(tensiones_array)
     
     #crear un array para almacenar las deformaciones
-    deformaciones_array = vtk.vtkDoubleArray()
+    deformaciones_array = pyvtk.DoubleArray()
     deformaciones_array.SetNumberOfComponents(1)
     deformaciones_array.SetName("Deformaciones")
     
@@ -349,20 +348,20 @@ def visualizar_solucion(tensiores, deformaciones, nodos, tetraedros):
     grid.GetPointData().AddArray(deformaciones_array)
     
     #crear un array para almacenar los tetraedros
-    tetraedros_array = vtk.vtkCellArray()
+    tetraedros_array = pyvtk.CellArray()
     
     #almacenar tetraedros
     for tetraedro in tetraedros:
-        cell = vtk.vtkTetra()
+        cell = pyvtk.Tetra()
         for i, a in enumerate(tetraedro):
             cell.GetPointIds().SetId(i, a)
         tetraedros_array.InsertNextCell(cell)
     
     #añadir tetraedros a la malla
-    grid.SetCells(vtk.VTK_TETRA, tetraedros_array)
+    grid.SetCells(pyvtk.VTK_TETRA, tetraedros_array)
     
     #crear un objeto vtkXMLUnstructuredGridWriter para exportar la malla
-    writer = vtk.vtkXMLUnstructuredGridWriter()
+    writer = pyvtk.XMLUnstructuredGridWriter()
     writer.SetFileName("solucion.vtu")
     writer.SetInputData(grid)
     writer.Write()

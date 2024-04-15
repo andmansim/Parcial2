@@ -12,29 +12,21 @@ nz = 10 #número de nodos en z
 #creamos un dominio de 10x10x10
 domain = np.zeros((nx,ny, nz))
 
-#calculamos el índice del punto central de cada dominio
-centro_x = nx // 2
-centro_y = ny // 2
-centro_z = nz // 2
+#generamos coordenadas 
+x = np.linspace(0, 1, nx)
+y = np.linspace(0, 1, ny)
+z = np.linspace(0, 1, nz)
 
-#asignamos un valor 1 a los puntos cercanos al centro
-domain[centro_x-1:centro_x+2, centro_y-1:centro_y+2, centro_z-1:centro_z+2] = 1
+#creamos cuadricula
+X, Y, Z = np.meshgrid(x, y, z)
 
-#Visualizamos el arreglo 3D
+#visualizamos la cuadricula
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-
-# Obtenemos las coordenadas de los puntos con valor 1
-x, y, z = np.where(domain == 1)
-
-# Graficamos los puntos
-ax.scatter(x, y, z, c='r', marker='o')
-
-# Configuramos las etiquetas de los ejes
+ax.scatter(X, Y, Z)
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
-
 plt.title('Dominio Estructural')
 plt.show()
 

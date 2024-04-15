@@ -147,10 +147,10 @@ def ensamblar_matriz_local(K_global, K_local, tetraedro):
     i, j, k, l = tetraedro
     
     #ensamblar matriz local en matriz global
-    for i_local, j_local in enumerate([i, j, k, l]):
-        for k_local, l_local in enumerate([i, j, k, l]):
-            K_global[3 * i_local:3 * i_local + 3, 3 * k_local:3 * k_local + 3] += K_local[3 * i_local:3 * i_local + 3, 3 * k_local:3 * k_local + 3]
-    
+    for i_local, i_global in enumerate([i, j, k, l]):
+        for j_local, j_global in enumerate([i, j, k, l]):
+            K_global[3 * i_local:3 * i_local + 3, 3 * j_local:3 * j_local + 3] += K_local[3 * i_local:3 * i_local + 3, 3 * j_local:3 * j_local + 3]
+
           
 def ensamblar_matriz_rigidez_global(nodos, tetraedros, propiedades):
     #inicializamos la matriz de rigidez global como una matriz dispersa
@@ -188,6 +188,7 @@ def calcular_matriz_rigidez_local(nodos, tetraedro, propiedades):
         [z1-z0, z2-z0, z3-z0]
     ])
     detJ = np.linalg.det(J)
+    print(detJ)
     #matriz del gradiente de las funciones de forma
     B = np.array([
         [dn_dxi[0], 0, 0, dn_dxi[1], 0, 0, dn_dxi[2], 0, 0, dn_dxi[3], 0, 0],
@@ -211,6 +212,7 @@ def calcular_matriz_rigidez_local(nodos, tetraedro, propiedades):
     
     #matriz de rigidez local
     K_local = np.dot(np.dot(B.T, C), B) * detJ
+    print(K_local)
     return K_local
 
 '''#ejemplo 

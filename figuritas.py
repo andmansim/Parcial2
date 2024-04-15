@@ -4,6 +4,7 @@ import meshpy.tet as tet
 from scipy.sparse import lil_matrix
 import matplotlib.pyplot as plt
 import pyvtk
+import vtk
 
 #Parte 1
 #definimos las dimansiones del dominio
@@ -228,3 +229,145 @@ fuerzas = np.array([0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1])
 desplazamientos = resolver_sistema(K_global, fuerzas)
 print("Desplazamientos:")
 print(desplazamientos)
+
+#Parte 8
+def calcular_tensor_deformaciones(K_global, desplazamiento, nodos, tetraedros, propiedades):
+    #inicializamos deformaciones y tensores
+    tensores = []
+    deformaciones = []
+    
+    #iteramos sobre cada tetraedro para calcular las deformaciones y tensores
+    for t in tetraedros:
+        #coordenadas
+        coord = np.array([nodos[i] for i in t])
+        
+        #matriz de deformacion para el tetraedro actual
+        B = calcular_matriz_deformacion(coord)
+        
+        #desplazamientos del tetraedro actual
+        despl = np.array([desplazamiento[3 * i:3 * i + 3] for i in t]).flatten()
+        
+        #desplazamientos del tetraedro actual en coordenadas globales
+        despl_glob = np.dot(B, despl)
+        
+        #calcular tensor de deformaciones
+        deformacion = calcular_deform_elem(B, despl)
+        
+        #calcular tensor de esfuerzos
+        tensor = calcular_tensor_esfuerzos(deformacion, propiedades)
+        
+        #almacenar tensor y deformacion
+        tensores.append(tensor)
+        deformaciones.append(deformacion)
+    return tensores, deformaciones
+
+def calcular_matriz_deformacion(coord):
+    #matriz de deformacion
+    B = np.zeros((6, 12))
+    
+    #calcular derivadas de las funciones de forma
+    dn_dxi = np.array([-1, 1, 0, 0])
+    dn_deta = np.array([-1, 0, 1, 0])
+    dn_dzeta = np.array([-1, 0, 0, 1])
+    
+    #iterar sobre cada nodo del tetraedro
+    for i in range(4):
+        #coordenadas del nodo
+        x, y, z = coord[i]
+        
+        #calcular matriz de deformacion
+        B[0, 3 * i] = dn_dxi[i]
+        B[1, 3 * i + 1] = dn_deta[i]
+        B[2, 3 * i + 2] = dn_dzeta[i]
+        B[3, 3 * i] = dn_deta[i]
+        B[3, 3 * i + 1] = dn_dxi[i]
+        B[4, 3 * i + 1] = dn_dzeta[i]
+        B[4, 3 * i + 2] = dn_deta[i]
+        B[5, 3 * i] = dn_dzeta[i]
+        B[5, 3 * i + 2] = dn_dxi[i]
+    return B
+
+def calcular_deform_elem(B, despl):
+    #calcular tensor de deformaciones
+    deformacion = np.dot(B, despl)
+    return deformacion
+
+def calcular_tensor_esfuerzos(deformacion, propiedades):
+    #propiedades del material
+    E = propiedades["E"]
+    nu = propiedades["nu"]
+    
+    #calcular tensor de esfuerzos
+    factor = E / ((1 + nu) * (1 - 2 * nu))
+    C = factor * np.array([
+        [1 - nu, nu, nu, 0, 0, 0],
+        [nu, 1 - nu, nu, 0, 0, 0],
+        [nu, nu, 1 - nu, 0, 0, 0],
+        [0, 0, 0, (1 - 2 * nu) / 2, 0, 0],
+        [0, 0, 0, 0, (1 - 2 * nu) / 2, 0],
+        [0, 0, 0, 0, 0, (1 - 2 * nu) / 2]
+    ])
+    tensor = np.dot(C, deformacion)
+    return tensor
+
+def visualizar_solucion(tensiores, deformaciones, nodos, tetraedros):
+    #creamos un objeto vtkUnstructuredGrid para almacenar la malla
+    grid =vtk.vtkUnstructuredGrid()
+    
+    #objeto vtkpoints para almacenar los nodos
+    points = vtk.vtkPoints()
+    
+    #almacenar nodos
+    for nodo in nodos:
+        points.InserNextPoint(nodo)
+        
+    #almacenar puntos en la malla
+    grid.SetPoints(points)
+    
+    #crear un array para almacenar las tensiones
+    tensiones_array = vtk.vtkDoubleArray()
+    tensiones_array.SetNumberOfComponents(1)
+    tensiones_array.SetName("Tensiones")
+    
+    #almacenar tensiones
+    for tension in tensiores:
+        tensiones_array.InsertNextValue(tension)
+        
+    #añadir tensiones a la malla
+    grid.GetPointData().AddArray(tensiones_array)
+    
+    #crear un array para almacenar las deformaciones
+    deformaciones_array = vtk.vtkDoubleArray()
+    deformaciones_array.SetNumberOfComponents(1)
+    deformaciones_array.SetName("Deformaciones")
+    
+    #almacenar deformaciones
+    for deformacion in deformaciones:
+        deformaciones_array.InsertNextValue(deformacion)
+    
+    #añadir deformaciones a la malla
+    grid.GetPointData().AddArray(deformaciones_array)
+    
+    #crear un array para almacenar los tetraedros
+    tetraedros_array = vtk.vtkCellArray()
+    
+    #almacenar tetraedros
+    for tetraedro in tetraedros:
+        cell = vtk.vtkTetra()
+        for i, a in enumerate(tetraedro):
+            cell.GetPointIds().SetId(i, a)
+        tetraedros_array.InsertNextCell(cell)
+    
+    #añadir tetraedros a la malla
+    grid.SetCells(vtk.VTK_TETRA, tetraedros_array)
+    
+    #crear un objeto vtkXMLUnstructuredGridWriter para exportar la malla
+    writer = vtk.vtkXMLUnstructuredGridWriter()
+    writer.SetFileName("solucion.vtu")
+    writer.SetInputData(grid)
+    writer.Write()
+
+#ejemplo
+propiedades = {"E": 1, "nu": 0.3}
+tensiones, deformaciones = calcular_tensor_deformaciones(K_global, desplazamientos, nodos, tetraedros, propiedades)
+visualizar_solucion(tensiones, deformaciones, nodos, tetraedros)

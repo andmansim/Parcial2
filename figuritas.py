@@ -3,8 +3,23 @@ import pandas as pd
 import meshpy.tet as tet
 from scipy.sparse import lil_matrix
 
-#creamos un dominio de 10 matrices de 0s de 10x10
-domain = np.zeros((10,10, 10))
+#definimos las dimansiones del dominio
+nx = 10 #número de nodos en x
+ny = 10 #número de nodos en y
+nz = 10 #número de nodos en z
+#creamos un dominio de 10x10x10
+domain = np.zeros((nx,ny, nz))
+
+#calculamos el índice del punto central de cada dominio
+centro_x = nx // 2
+centro_y = ny // 2
+centro_z = nz // 2
+
+#asignamos un valor 1 a los puntos cercanos al centro
+domain[centro_x-1:centro_x+2, centro_y-1:centro_y+2, centro_z-1:centro_z+2] = 1
+
+#mostramos el arreglo 3D
+print('Dominio 3D\n')
 print(domain)
 
 #Paraview

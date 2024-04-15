@@ -130,3 +130,49 @@ N = funcion_forma_tetraedro(xi, eta, zeta)
 print("Función de forma en el punto (xi, eta, zeta):")
 print(N)
 
+#Parte 6
+def ensamblar_matriz_rigidez_global_sparse(nodos, tetraedros, propiedades):
+    #inicializamos la matriz de rigidez global como una matriz dispersa
+    num_nodos = len(nodos)
+    K_global = lil_matrix((3*num_nodos, 3*num_nodos))
+    
+    #iteramos sobre cada tetraedro para ensamblar su matriz de rigidez en la matriz global
+    for t in tetraedros:
+        #calcular matriz de rigidez local para el tetraedro actual
+        matriz_rigidez_local = calcular_matriz_rigidez_local(nodos, t, propiedades)
+        #ensamblar matriz de rigidez local en matriz global
+        ensmablar_matriz_local (K_global, matriz_rigidez_local, t)
+    return K_global
+def calcular_matriz_rigidez_local(nodos, tetraedro, propiedades):
+    #propiedades del material
+    E = propiedades["E"]
+    nu = propiedades["nu"]
+    
+    #coordenadas de los nodos del tetraedro
+    x0, y0, z0 = nodos[tetraedro[0]]
+    x1, y1, z1 = nodos[tetraedro[1]]
+    x2, y2, z2 = nodos[tetraedro[2]]
+    x3, y3, z3 = nodos[tetraedro[3]]
+    
+    #calculo de las derivadas de las funciones de forma
+    dn_dxi = np.array([-1,1, 0, 0])
+    dn_deta = np.array([-1, 0, 1, 0])
+    dn_dzeta = np.array([-1, 0, 0, 1])
+    
+    #jacoviano
+    J = np.array([
+        [x1-x0, x2-x0, x3-x0],
+        [y1-y0, y2-y0, y3-y0],
+        [z1-z0, z2-z0, z3-z0]
+    ])
+    detJ = np.linalg.det(J)
+    #matriz del gradiente de las funciones de forma
+    B = np.array([
+        [dn_dxi[0], 0, 0, dn_dxi[1], 0, 0, dn_dxi[2], 0, 0, dn_dxi[3], 0, 0],
+        [0, dn_deta[0], 0, 0, dn_deta[1], 0, 0, dn_deta[2], 0, 0, dn_deta[3], 0],
+        [0, 0, dn_dzeta[0], 0, 0, dn_dzeta[1], 0, 0, dn_dzeta[2], 0, 0, dn_dzeta[3]],
+        [dn_deta[0], dn_dxi[0], 0, dn_deta[1], dn_dxi[1], 0, dn_deta[2], dn_dxi[2], 0, dn_deta[3], dn_dxi[3], 0],
+        [0, dn_dzeta[0], dn_deta[0], 0, dn_dzeta[1], dn_deta[1], 0, dn_dzeta[2], dn_deta[2], 0, dn_dzeta[3], dn_deta[3]],
+        [dn_dzeta[0], 0, dn_dxi[0], dn_dzeta[1], 0, dn_dxi[1], dn_dzeta[2], 0, dn_dxi[2], dn_dzeta[3], 0, dn_dxi[3]]
+    ]) / detJ
+ 

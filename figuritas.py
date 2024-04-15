@@ -3,6 +3,7 @@ import pandas as pd
 import meshpy.tet as tet
 from scipy.sparse import lil_matrix
 import matplotlib.pyplot as plt
+from pyevtk.hl import gridToVTK
 
 #Parte 1
 #definimos las dimansiones del dominio
@@ -31,6 +32,40 @@ plt.title('Dominio Estructural')
 plt.show()
 
 #Parte 2
+lx, ly, lz = 1.0, 1.0, 1.0
+dx, dy, dz = lx/nx, ly/ny, lz/nz
+
+# Supongamos que tienes los datos de presión y desplazamiento en arrays de numpy
+pressure_data = np.random.rand(nx, ny, nz)
+displacement_data = np.random.rand(nx+1, ny+1, nz+1, 3)
+
+# Convertir los datos a un formato que pandas pueda manejar
+# Suponiendo que tengas coordenadas x, y, z
+x = np.linspace(0, lx, nx)
+y = np.linspace(0, ly, ny)
+z = np.linspace(0, lz, nz)
+xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+
+# Crear DataFrames de pandas para presiones y desplazamientos
+pressure_df = pd.DataFrame({'x': xx.ravel(), 'y': yy.ravel(), 'z': zz.ravel(), 'pressure': pressure_data.ravel()})
+displacement_df = pd.DataFrame({'x': xx[:-1,:,:].ravel(), 'y': yy[:,:-1,:].ravel(), 'z': zz[:,:,:-1].ravel(),
+                                'displacement_x': displacement_data[:,:-1,:,:].ravel(),
+                                'displacement_y': displacement_data[:,:-1,:,:].ravel(),
+                                'displacement_z': displacement_data[:,:-1,:,:].ravel()})
+
+# Exportar los DataFrames a archivos CSV
+pressure_df.to_csv('pressure_data.csv', index=False)
+displacement_df.to_csv('displacement_data.csv', index=False)
+
+# Generar archivos VTK a partir de los datos
+gridToVTK("./results_pressure", x, y, z, cellData = {"Pressure" : pressure_data})
+gridToVTK("./results_displacement", x[:-1], y[:-1], z[:-1],
+          pointData = {"Displacement_x" : displacement_data[:,:-1,:-1,0],
+                       "Displacement_y" : displacement_data[:,:-1,:-1,1],
+                       "Displacement_z" : displacement_data[:,:-1,:-1,2]})
+
+print("Datos exportados exitosamente en formato CSV y VTK.")
+
 '''def export_to_vtk(filename, pressures, displacements):
     # Crear un objeto VTK UnstructuredGrid
     grid = vtk.vtkUnstructuredGrid()

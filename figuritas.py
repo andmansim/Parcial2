@@ -41,3 +41,23 @@ def exportar_paraview(nombre, presion, desplazamineto):
     mesh.tofile(nombre)
 
 
+#definimos los datos
+def calcular_tensor_deformaciones(desplazamiento):
+    # Derivadas de las funciones de forma respecto a las coordenadas naturales del elemento
+    B = np.array([
+        [-1, 1, 0, 0],
+        [-1, 0, 1, 0],
+        [-1, 0, 0, 1]
+    ])
+
+    # Calcular el tensor de deformaciones
+    strain_tensor= np.dot(B, desplazamiento)
+    return strain_tensor
+
+
+
+# Ejemplo de uso
+desplazamientos = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
+tensor_deformaciones = calcular_tensor_deformaciones(desplazamientos)
+print("Tensor de deformaciones:")
+print(tensor_deformaciones)

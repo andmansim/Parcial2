@@ -131,7 +131,7 @@ print("Función de forma en el punto (xi, eta, zeta):")
 print(N)
 
 #Parte 6
-def ensamblar_matriz_rigidez_global_sparse(nodos, tetraedros, propiedades):
+def ensamblar_matriz_rigidez_global(nodos, tetraedros, propiedades):
     #inicializamos la matriz de rigidez global como una matriz dispersa
     num_nodos = len(nodos)
     K_global = lil_matrix((3*num_nodos, 3*num_nodos))
@@ -141,7 +141,7 @@ def ensamblar_matriz_rigidez_global_sparse(nodos, tetraedros, propiedades):
         #calcular matriz de rigidez local para el tetraedro actual
         matriz_rigidez_local = calcular_matriz_rigidez_local(nodos, t, propiedades)
         #ensamblar matriz de rigidez local en matriz global
-        ensmablar_matriz_local (K_global, matriz_rigidez_local, t)
+        ensamablar_matriz_local(K_global, matriz_rigidez_local, t)
     return K_global
 def calcular_matriz_rigidez_local(nodos, tetraedro, propiedades):
     #propiedades del material
@@ -175,4 +175,56 @@ def calcular_matriz_rigidez_local(nodos, tetraedro, propiedades):
         [0, dn_dzeta[0], dn_deta[0], 0, dn_dzeta[1], dn_deta[1], 0, dn_dzeta[2], dn_deta[2], 0, dn_dzeta[3], dn_deta[3]],
         [dn_dzeta[0], 0, dn_dxi[0], dn_dzeta[1], 0, dn_dxi[1], dn_dzeta[2], 0, dn_dxi[2], dn_dzeta[3], 0, dn_dxi[3]]
     ]) / detJ
- 
+    
+    #matriz de elasticidad
+    factor = E / ((1 + nu) * (1 - 2 * nu))
+    C = factor * np.array([
+        [1 - nu, nu, nu, 0, 0, 0],
+        [nu, 1 - nu, nu, 0, 0, 0],
+        [nu, nu, 1 - nu, 0, 0, 0],
+        [0, 0, 0, (1 - 2 * nu) / 2, 0, 0],
+        [0, 0, 0, 0, (1 - 2 * nu) / 2, 0],
+        [0, 0, 0, 0, 0, (1 - 2 * nu) / 2]
+    ])
+    
+    #matriz de rigidez local
+    K_local = np.dot(np.dot(B.T, C), B) * detJ
+    return K_local
+
+#ejemplo 
+nodos, tetraedros = generar_mallado()
+propiedades = {"E": 1, "nu": 0.3}
+K_global = ensamblar_matriz_rigidez_global(nodos, tetraedros, propiedades)
+print("Matriz de rigidez global:")
+print(K_global.toarray())  
+
+def ensamablar_matriz_local(K_global, K_local, tetraedro):
+    #tamaño de la matriz de rigidez local
+    n = K_local.shape[0]
+    
+    #convertir matriz local a matriz dispersa
+    K_local = lil_matrix(K_local)
+    
+    #ínidices de los nodos del tetraedro
+    i, j, k, l = tetraedro
+    
+    #ensamblar matriz local en matriz global
+    for i_local, j_local in enumerate([i, j, k, l]):
+        for k_local, l_local in enumerate([i, j, k, l]):
+            K_global[3 * i_local:3 * i_local + 3, 3 * k_local:3 * k_local + 3] += K_local[3 * i_local:3 * i_local + 3, 3 * k_local:3 * k_local + 3]
+    
+            
+#Parte 7
+def resolver_sistema(K_global, f):
+    #convertir matriz de rigidez global a formato denso
+    K_global = K_global.tocsr()
+    
+    #resolver sistema de ecuaciones
+    u = np.linalg.solve(K_global.toarray(), f)
+    return u
+
+#ejemplo
+fuerzas = np.array([0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1])
+desplazamientos = resolver_sistema(K_global, fuerzas)
+print("Desplazamientos:")
+print(desplazamientos)

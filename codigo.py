@@ -33,6 +33,7 @@ plt.show()
 
 #Parte 2
 def exportar_paraview(nombre, presion, desplazamineto):
+    #exporta datos para ser visualizados en ParaView
     #creamos una malla
     puntos = np.column_stack((np.arange(len(presion)), np.zeros(len(presion)), np.zeros(len(presion))))
     mesh = pyvtk.UnstructuredGrid(puntos, point_data={"Presion": presion, "Desplazamiento": desplazamineto})
@@ -43,6 +44,7 @@ def exportar_paraview(nombre, presion, desplazamineto):
 #Parte3
 #definimos los datos
 def calcular_tensor_deformaciones(desplazamiento):
+    #calcula el tensor de deformaciones para un conjunto dado de desplazamientos
     # Derivadas de las funciones de forma respecto a las coordenadas naturales del elemento
     B = np.array([
         [-1, 1, 0, 0],
@@ -72,6 +74,7 @@ print(tensor_deformaciones)'''
 #Parte 4
 
 def generar_mallado():
+    #genera el mallado inicial con nodos y tetraedros
     # Lista de coordenadas de nodos
     coordenadas_nodos = [
         [0, 0, 0],
@@ -102,17 +105,18 @@ def generar_mallado():
 
     return nodos, tetraedros
 
-# Ejemplo de uso
+'''# Ejemplo de uso
 nodos, tetraedros = generar_mallado()
 
 print("Nodos:")
 print(nodos)
 print("Tetraedros:")
-print(tetraedros)
+print(tetraedros)'''
 
 #Parte 5
 
 def funcion_forma_tetraedro(xi, eta, zeta):
+    #calcula la función de forma para un tetraedro en un punto (xi, eta, zeta)
     N = np.array([
         [1 - xi - eta - zeta],
         [xi],
@@ -121,7 +125,7 @@ def funcion_forma_tetraedro(xi, eta, zeta):
     ])
     return N
 
-# Ejemplo de uso
+'''# Ejemplo de uso
 xi = 0.1
 eta = 0.2
 zeta = 0.3
@@ -129,9 +133,10 @@ zeta = 0.3
 N = funcion_forma_tetraedro(xi, eta, zeta)
 print("Función de forma en el punto (xi, eta, zeta):")
 print(N)
-
+'''
 #Parte 6
-def ensamablar_matriz_local(K_global, K_local, tetraedro):
+def ensamblar_matriz_local(K_global, K_local, tetraedro):
+    #ensambla la matriz de rigidez local en la matriz de rigidez global
     #tamaño de la matriz de rigidez local
     n = K_local.shape[0]
     
@@ -157,8 +162,9 @@ def ensamblar_matriz_rigidez_global(nodos, tetraedros, propiedades):
         #calcular matriz de rigidez local para el tetraedro actual
         matriz_rigidez_local = calcular_matriz_rigidez_local(nodos, t, propiedades)
         #ensamblar matriz de rigidez local en matriz global
-        ensamablar_matriz_local(K_global, matriz_rigidez_local, t)
+        ensamblar_matriz_local(K_global, matriz_rigidez_local, t)
     return K_global
+
 def calcular_matriz_rigidez_local(nodos, tetraedro, propiedades):
     #propiedades del material
     E = propiedades["E"]
@@ -207,13 +213,13 @@ def calcular_matriz_rigidez_local(nodos, tetraedro, propiedades):
     K_local = np.dot(np.dot(B.T, C), B) * detJ
     return K_local
 
-#ejemplo 
+'''#ejemplo 
 nodos, tetraedros = generar_mallado()
 propiedades = {"E": 1, "nu": 0.3}
 K_global = ensamblar_matriz_rigidez_global(nodos, tetraedros, propiedades)
 print("Matriz de rigidez global:")
 print(K_global.toarray())  
-
+'''
   
 #Parte 7
 def resolver_sistema(K_global, f):
@@ -369,3 +375,38 @@ def visualizar_solucion(tensiores, deformaciones, nodos, tetraedros):
 
 
 #visualizar_solucion(tensiones, deformaciones, nodos, tetraedros)
+
+if __name__ == "__main__":
+    # Generamos el mallado
+    nodos, tetraedros = generar_mallado()
+
+    # Calculamos la matriz de rigidez global
+    K_global = np.zeros((len(nodos) * 3, len(nodos) * 3))
+
+    # Ensamblamos la matriz de rigidez global
+    for tetraedro in tetraedros:
+        # Calculamos la matriz de rigidez local
+        K_local = np.zeros((12, 12))
+
+        # Ensamblamos la matriz local en la matriz global
+        ensamblar_matriz_local(K_global, K_local, tetraedro)
+
+    # Definimos las condiciones de contorno y las cargas
+    f = np.zeros(len(nodos) * 3)  # Vector de fuerzas externas
+    desplazamiento_restringido = np.zeros(len(nodos) * 3)  # Vector de desplazamientos restringidos
+
+    # Resolvemos el sistema de ecuaciones
+    desplazamiento = resolver_sistema(K_global, f)
+
+    # Calculamos los tensores de deformación y esfuerzo para cada elemento
+    tensor_deformacion = []
+    tensor_esfuerzo = []
+    for i in range(len(tetraedros)):
+        desplazamiento_elemento = desplazamiento[tetraedros[i]]
+        deformaciones_elemento = calcular_tensor_deformaciones(desplazamiento_elemento)
+        esfuerzos_elemento = calcular_tensor_esfuerzos(deformaciones_elemento)
+        tensor_deformacion.append(deformaciones_elemento)
+        tensor_esfuerzo.append(esfuerzos_elemento)
+
+    # Visualizamos los resultados
+    exportar_paraview("resultado.vtk", tensor_esfuerzo, desplazamiento)

@@ -38,38 +38,42 @@ plt.show()
 lx, ly, lz = 1.0, 1.0, 1.0
 dx, dy, dz = lx/nx, ly/ny, lz/nz
 
-# Supongamos que tienes los datos de presión y desplazamiento en arrays de numpy
+def export_results_to_vtk(pressure_data, displacement_data, lx, ly, lz, nx, ny, nz):
+    # Convertir los datos a un formato que pyvtk pueda manejar
+    x = np.linspace(0, lx, nx)
+    y = np.linspace(0, ly, ny)
+    z = np.linspace(0, lz, nz)
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+
+    # Crear un objeto UnstructuredGrid para los datos de presión
+    points_pressure = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).T
+    pressure_cells = np.arange(nx * ny * nz).reshape(nx, ny, nz)
+    pressure_unstructured_grid = UnstructuredGrid(points_pressure, tetra=pressure_cells)
+
+    # Crear un objeto UnstructuredGrid para los datos de desplazamiento
+    points_displacement = np.array([xx[:-1,:,:].ravel(), yy[:,:-1,:].ravel(), zz[:,:,:-1].ravel()]).T
+    displacement_cells = np.arange(nx * ny * nz).reshape(nx-1, ny-1, nz-1)
+    displacement_unstructured_grid = UnstructuredGrid(points_displacement, hexahedron=displacement_cells)
+
+    # Agregar los datos escalares a los puntos para presión y desplazamiento
+    pressure_unstructured_grid.point_data.append(Scalars(pressure_data.ravel(), name='Pressure'))
+    displacement_unstructured_grid.point_data.append(Scalars(displacement_data[:,:-1,:-1,:].ravel(), name='Displacement'))
+
+    # Escribir los datos a archivos VTK
+    pressure_vtk = VtkData(pressure_unstructured_grid)
+    pressure_vtk.tofile('pressure_data.vtk')
+
+    displacement_vtk = VtkData(displacement_unstructured_grid)
+    displacement_vtk.tofile('displacement_data.vtk')
+
+    print("Datos exportados exitosamente en formato VTK.")
+
+lx, ly, lz = 1.0, 1.0, 1.0
 pressure_data = np.random.rand(nx, ny, nz)
 displacement_data = np.random.rand(nx+1, ny+1, nz+1, 3)
 
-# Convertir los datos a un formato que pyvtk pueda manejar
-x = np.linspace(0, lx, nx)
-y = np.linspace(0, ly, ny)
-z = np.linspace(0, lz, nz)
-xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+export_results_to_vtk(pressure_data, displacement_data, lx, ly, lz, nx, ny, nz)
 
-# Crear un objeto UnstructuredGrid para los datos de presión
-points_pressure = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).T
-pressure_cells = np.arange(nx * ny * nz).reshape(nx, ny, nz)
-pressure_unstructured_grid = UnstructuredGrid(points_pressure, tetra=pressure_cells)
-
-# Crear un objeto UnstructuredGrid para los datos de desplazamiento
-points_displacement = np.array([xx[:-1,:,:].ravel(), yy[:,:-1,:].ravel(), zz[:,:,:-1].ravel()]).T
-displacement_cells = np.arange(nx * ny * nz).reshape(nx-1, ny-1, nz-1)
-displacement_unstructured_grid = UnstructuredGrid(points_displacement, hexahedron=displacement_cells)
-
-# Agregar los datos escalares a los puntos para presión y desplazamiento
-pressure_unstructured_grid.point_data.append(Scalars(pressure_data.ravel(), name='Pressure'))
-displacement_unstructured_grid.point_data.append(Scalars(displacement_data[:,:-1,:-1,:].ravel(), name='Displacement'))
-
-# Escribir los datos a archivos VTK
-pressure_vtk = VtkData(pressure_unstructured_grid)
-pressure_vtk.tofile('pressure_data.vtk')
-
-displacement_vtk = VtkData(displacement_unstructured_grid)
-displacement_vtk.tofile('displacement_data.vtk')
-
-print("Datos exportados exitosamente en formato VTK.")
 
 
 '''def export_to_vtk(filename, pressures, displacements):

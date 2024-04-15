@@ -40,7 +40,7 @@ def exportar_paraview(nombre, presion, desplazamineto):
     #lo pasamos a vtk
     mesh.tofile(nombre)
 
-
+#Parte3
 #definimos los datos
 def calcular_tensor_deformaciones(desplazamiento):
     # Derivadas de las funciones de forma respecto a las coordenadas naturales del elemento
@@ -57,7 +57,55 @@ def calcular_tensor_deformaciones(desplazamiento):
 
 
 # Ejemplo de uso
-desplazamientos = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
+desplazamientos_manual = np.array([
+    [0.1, 0.2, 0.3],  
+    [0.2, 0.3, 0.4],  
+    [0.3, 0.4, 0.5],  
+    [0.4, 0.5, 0.6],  
+    [0.5, 0.6, 0.7]   
+])
+'''
 tensor_deformaciones = calcular_tensor_deformaciones(desplazamientos)
 print("Tensor de deformaciones:")
-print(tensor_deformaciones)
+print(tensor_deformaciones)'''
+
+#Parte 4
+
+def generar_mallado():
+    # Lista de coordenadas de nodos
+    coordenadas_nodos = [
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+        [1, 1, 1]
+    ]
+    
+    # Lista de índices de nodos que forman los tetraedros
+    indices_tetraedros = [
+        [0, 1, 2, 3],
+        [1, 2, 3, 4]
+    ]
+
+    # Crear una lista vacía para almacenar los nodos
+    nodos = []
+    # Crear una lista vacía para almacenar los tetraedros
+    tetraedros = []
+
+    # Agregar los nodos al mallado
+    for coordenada in coordenadas_nodos:
+        nodos.append(coordenada)
+
+    # Agregar los tetraedros al mallado
+    for tetraedro in indices_tetraedros:
+        tetraedros.append(tetraedro)
+
+    return nodos, tetraedros
+
+# Ejemplo de uso
+nodos, tetraedros = generar_mallado()
+
+print("Nodos:")
+print(nodos)
+print("Tetraedros:")
+print(tetraedros)

@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import meshpy.tet as tet
 from scipy.sparse import lil_matrix
+import matplotlib.pyplot as plt
 
+#Parte 1
 #definimos las dimansiones del dominio
 nx = 10 #número de nodos en x
 ny = 10 #número de nodos en y
@@ -18,10 +20,74 @@ centro_z = nz // 2
 #asignamos un valor 1 a los puntos cercanos al centro
 domain[centro_x-1:centro_x+2, centro_y-1:centro_y+2, centro_z-1:centro_z+2] = 1
 
-#mostramos el arreglo 3D
-print('Dominio 3D\n')
-print(domain)
+#Visualizamos el arreglo 3D
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
 
+# Obtenemos las coordenadas de los puntos con valor 1
+x, y, z = np.where(domain == 1)
+
+# Graficamos los puntos
+ax.scatter(x, y, z, c='r', marker='o')
+
+# Configuramos las etiquetas de los ejes
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+
+plt.title('Dominio Estructural')
+plt.show()
+
+#Parte 2
+'''def export_to_vtk(filename, pressures, displacements):
+    # Crear un objeto VTK UnstructuredGrid
+    grid = vtk.vtkUnstructuredGrid()
+
+    # Crear un arreglo de puntos para almacenar los desplazamientos
+    points = vtk.vtkPoints()
+
+    # Agregar los puntos al arreglo
+    nx, ny, nz = pressures.shape
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                points.InsertNextPoint(i, j, k)
+
+    # Asignar los puntos al objeto grid
+    grid.SetPoints(points)
+
+    # Crear un arreglo de datos escalares para las presiones
+    pressure_data = vtk.vtkFloatArray()
+    pressure_data.SetNumberOfComponents(1)
+    pressure_data.SetName("Pressure")
+
+    # Crear un arreglo de datos vectoriales para los desplazamientos
+    displacement_data = vtk.vtkFloatArray()
+    displacement_data.SetNumberOfComponents(3)
+    displacement_data.SetName("Displacement")
+
+    # Agregar los datos al arreglo
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                pressure_data.InsertNextValue(pressures[i, j, k])
+                displacement_data.InsertNextTuple3(displacements[i, j, k, 0], displacements[i, j, k, 1], displacements[i, j, k, 2])
+
+    # Agregar los arreglos de datos al objeto grid
+    grid.GetPointData().AddArray(pressure_data)
+    grid.GetPointData().AddArray(displacement_data)
+
+    # Escribir el archivo VTK
+    writer = vtk.vtkXMLUnstructuredGridWriter()
+    writer.SetFileName(filename)
+    writer.SetInputData(grid)
+    writer.Write()
+
+# Ejemplo de uso
+pressures = np.random.rand(5, 5, 5)  # Presiones aleatorias como ejemplo
+displacements = np.random.rand(5, 5, 5, 3)  # Desplazamientos aleatorios como ejemplo
+
+export_to_vtk("results.vtu", pressures, displacements)
 #Paraview
 #creamos un csv con las coordenadas x, y,z y la presion
 df = pd.DataFrame({'x':[0,1], 'y':[0,1], 'z':[0,1], 'pressure':[100,150]})
@@ -46,4 +112,4 @@ def funcion_forma(punto, nodos):
     return np.array([ ... ])
 
 K_global = lil_matrix((nodos_totales, nodos_totales))
-# Suma las matrices locales de rigidez al K_global en los índices correctos
+# Suma las matrices locales de rigidez al K_global en los índices correctos'''

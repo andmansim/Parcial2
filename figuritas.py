@@ -109,3 +109,24 @@ print("Nodos:")
 print(nodos)
 print("Tetraedros:")
 print(tetraedros)
+
+#Parte 5
+
+def funcion_forma_tetraedro(xi, eta, zeta):
+    N = np.array([
+        [1 - xi - eta - zeta],
+        [xi],
+        [eta],
+        [zeta]
+    ])
+    return N
+
+# Ejemplo de uso
+xi = 0.1
+eta = 0.2
+zeta = 0.3
+
+N = funcion_forma_tetraedro(xi, eta, zeta)
+print("Función de forma en el punto (xi, eta, zeta):")
+print(N)
+
